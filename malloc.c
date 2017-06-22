@@ -1,11 +1,21 @@
 #include <stdio.h>
 #include <malloc.h>
 
+struct spisok{
+  void* adress;
+  int  size;
+  int  state;
+  struct spisok* next;
+  struct spisok* previous;
+};
+
 
 void* new_malloc(size_t size, const void*a)
 {
-  void
+  void *p;
+  p=sbrk(0);
   sbrk(size);
+  return p;
 }
 
 void new_free(void*name, const void*b)
