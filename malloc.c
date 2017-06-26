@@ -8,24 +8,39 @@ struct spisok{
   struct spisok* next;
   struct spisok* previous;
 };
+
 struct spisok *memory=NULL;
 
 void* new_malloc(size_t size, const void*a)
 {
+  int log=0;
+  struct spisok *ancillary_memory;
   if(memory==NULL){
-    memory->address=sbrk(0);
-    memory->size=size;
-    memory->state=1;
-    memory->previous=NULL;
-    memory->next=NULL;
-    sbrk(size);
-    return memory->address;
+      memory=sbrk(0);
+      sbrk(sizeof(struct spisok));
+      memory->address=sbrk(0);
+      memory->size=size;
+      memory->state=1;
+      memory->previous=NULL;
+      memory->next=NULL;
+      sbrk(size);
+      return memory->address;
   }
   else{
-    while( (memory->next!=NULL) || ((memory->next->state!=0)&&(memory->next->size>=size)) ){
-        memory=memory->next;
+    ancillary_memory=memory;
+    while((memory->previous!=NULL)||(log!=1)){
+        memory=memory->previous;
+        if((memory->state==0)&&(memory->size>=size))
+             log=1;
     }
-    if(memory->next==NULL){
+    if(log==1){
+        memory->state=1;
+        return memory->address;
+    }
+    else{
+        memory=ancillary_memory;
+        memory->next=sbrk(0);
+        sbrk(sizeof(struct spisok));
         memory->next->previous=memory;
         memory=memory->next;
         memory->address=sbrk(0);
@@ -35,22 +50,18 @@ void* new_malloc(size_t size, const void*a)
         sbrk(size);
         return memory->address;
     }
-    else{
-        memory=memory->next;
-        memory->state=1;
-        return memory->address;
-    }
   }
 }
 
 void new_free(void*name, const void*b)
 {
     while(memory->address!=name){
-        memory=memory->next;
+        memory=memory->previous;
     }
     if(memory->next==NULL){
         memory->previous->next=NULL;
         brk(name);
+        brk(sizeof(struct spisok));
     }
     else{
         memory->state=0;
@@ -68,15 +79,16 @@ int main()
 {
     int *a, *b, *c, *e;
     a=malloc(sizeof(int));
-    a=10;
+    *a=10;
     b=malloc(sizeof(int));
-    b=11;
+    *b=11;
     c=malloc(sizeof(int));
-    c=12;
+    *c=12;
     printf("%d %d %d\n", *a, *b, *c);
     printf("%p %p %p\n", a, b, c);
     free(b);
     e=malloc(sizeof(int));
+    *e=13;
     printf("%d %d %d\n", *a, *c, *e);
     printf("%p %p  %p\n",a, c, e);
 
