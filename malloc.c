@@ -28,10 +28,10 @@ void* new_malloc(size_t size, const void*a)
   }
   else{
     ancillary_memory=memory;
-    while((memory->previous!=NULL)||(log!=1)){
+    while((memory->previous!=NULL)&&(log!=1)){
         memory=memory->previous;
         if((memory->state==0)&&(memory->size>=size))
-             log=1;
+            log=1;
     }
     if(log==1){
         memory->state=1;
@@ -55,16 +55,20 @@ void* new_malloc(size_t size, const void*a)
 
 void new_free(void*name, const void*b)
 {
+    struct spisok *ancillary_memory;
+    ancillary_memory=memory;
     while(memory->address!=name){
         memory=memory->previous;
     }
     if(memory->next==NULL){
         memory->previous->next=NULL;
-        brk(name);
-        brk(sizeof(struct spisok));
+        sbrk(-(memory->size));
+        sbrk(-(sizeof(struct spisok)));
+        memory=memory->previous; 
     }
     else{
         memory->state=0;
+        memory=ancillary_memory;
     }
 }
 
@@ -77,19 +81,20 @@ void (* __malloc_initialize_hook)(void)=init;
 
 int main()
 {
-    int *a, *b, *c, *e;
-    a=malloc(sizeof(int));
-    *a=10;
-    b=malloc(sizeof(int));
-    *b=11;
-    c=malloc(sizeof(int));
-    *c=12;
-    printf("%d %d %d\n", *a, *b, *c);
+    int *a, *b;
+    char*c, *e;
+    a=malloc(sizeof(int)*5);
+    *a=10; a[4]=10;
+    b=malloc(sizeof(int)*2);
+    b[0]=1;
+    c=malloc(sizeof(char));
+    *c='c';
+    printf("%d %d %c\n", a[4], b[0], *c);
     printf("%p %p %p\n", a, b, c);
-    free(b);
-    e=malloc(sizeof(int));
-    *e=13;
-    printf("%d %d %d\n", *a, *c, *e);
-    printf("%p %p  %p\n",a, c, e);
+    free(c);
+    e=malloc(sizeof(char));
+    *e='e';
+    printf("%d %d %c\n", a[4], b[0], *e);
+    printf("%p %p  %p\n",a, b, e);
 
 }
